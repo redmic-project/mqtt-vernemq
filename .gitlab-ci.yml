@@ -1,0 +1,82 @@
+stages:
+  - deploy
+
+image: registry.gitlab.com/redmic-project/docker/docker-deploy:latest
+
+variables:
+  DOCKER_DRIVER: overlay2
+  STACK: mqtt
+  SERVICES_TO_CHECK: mqtt_${CI_PROJECT_NAME}
+  STATUS_CHECK_DELAY: 60
+  IMAGE_TAG: ${VERNEMQ_IMAGE_TAG:-latest}
+
+services:
+  - docker:dind
+
+deploy-supporting-branch-develop:
+  stage: deploy
+  variables:
+    SSH_REMOTE: ${DEV_SSH_REMOTE}
+    COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.dev.yml
+    DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${DEV_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+  script:
+    - >
+      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+  environment:
+    name: dev
+  only:
+    - branches
+  except:
+    - master
+  when: manual
+
+deploy-stable-branch-develop:
+  stage: deploy
+  variables:
+    SSH_REMOTE: ${DEV_SSH_REMOTE}
+    COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.dev.yml
+    DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${DEV_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+  script:
+    - >
+      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+  environment:
+    name: dev
+  only:
+    - master
+  when: manual
+
+deploy-supporting-branch-production:
+  stage: deploy
+  variables:
+    SSH_REMOTE: ${PRO_SSH_REMOTE}
+    COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.prod.yml
+    DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${PRO_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+  script:
+    - >
+      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+  environment:
+    name: pro
+  only:
+    - branches
+  except:
+    - master
+  when: manual
+
+deploy-stable-branch-production:
+  stage: deploy
+  variables:
+    SSH_REMOTE: ${PRO_SSH_REMOTE}
+    COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.prod.yml
+    DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${PRO_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+  script:
+    - >
+      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+  environment:
+    name: pro
+  only:
+    - master
+  when: manual

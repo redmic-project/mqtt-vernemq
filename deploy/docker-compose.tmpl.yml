@@ -1,0 +1,35 @@
+version: '3.5'
+
+services:
+  vernemq:
+    image: erlio/docker-vernemq:${IMAGE_TAG:-latest}
+    environment:
+      - DOCKER_VERNEMQ_ALLOW_ANONYMOUS
+    networks:
+      - traefik-net
+    ports:
+      - target: 1883
+        published: 1883
+        protocol: tcp
+        mode: host
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        traefik.frontend.rule: Host:${SUBDOMAIN}.${PUBLIC_HOSTNAME}
+        traefik.backend: vernemq
+        traefik.port: '8080'
+      restart_policy:
+        delay: 10s
+        window: 2m
+      resources:
+        limits:
+          cpus: '1'
+          memory: 128M
+        reservations:
+          memory: 103M
+
+networks:
+  traefik-net:
+    name: ${TRAEFIK_NET_NAME:-traefik-net}
+    external: true
