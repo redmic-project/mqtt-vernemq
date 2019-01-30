@@ -4,10 +4,12 @@ services:
   vernemq:
     image: erlio/docker-vernemq:${IMAGE_TAG:-latest}
     environment:
-      - DOCKER_VERNEMQ_NODENAME=vmq-{{.Task.Slot}}
       - DOCKER_VERNEMQ_ALLOW_ANONYMOUS
       - DOCKER_VERNEMQ_LISTENER__HTTP__DEFAULT
       - DOCKER_IP_ADDRESS
+      - DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_REDIS__ENABLED
+      - DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__HOST
+      - DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__PORT
     networks:
       - vernemq-net
       - traefik-net
