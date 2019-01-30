@@ -67,7 +67,7 @@ services:
 
 networks:
   vernemq-net:
-    name: ${VERNEMQ_NET_NAME}
+    name: ${VERNEMQ_NET_NAME:-vernemq-net}
     driver: overlay
     attachable: ${VERNEMQ_NET_ATTACHABLE:-true}
 
