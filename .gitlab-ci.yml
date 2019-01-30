@@ -6,7 +6,7 @@ image: registry.gitlab.com/redmic-project/docker/docker-deploy:latest
 variables:
   DOCKER_DRIVER: overlay2
   STACK: mqtt
-  SERVICES_TO_CHECK: mqtt_${CI_PROJECT_NAME}
+  SERVICES_TO_CHECK: mqtt_${CI_PROJECT_NAME} mqtt_vmq-redis
   STATUS_CHECK_DELAY: 60
   IMAGE_TAG: ${VERNEMQ_IMAGE_TAG:-latest}
 
@@ -18,10 +18,11 @@ deploy-supporting-branch-develop:
   variables:
     SSH_REMOTE: ${DEV_SSH_REMOTE}
     COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.dev.yml
+    PUBLIC_HOSTNAME: ${DEV_PUBLIC_HOSTNAME}
     DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${DEV_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
   script:
     - >
-      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
+      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE} PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME}
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
   environment:
     name: dev
@@ -36,10 +37,11 @@ deploy-stable-branch-develop:
   variables:
     SSH_REMOTE: ${DEV_SSH_REMOTE}
     COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.dev.yml
+    PUBLIC_HOSTNAME: ${DEV_PUBLIC_HOSTNAME}
     DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${DEV_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
   script:
     - >
-      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
+      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE} PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME}
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
   environment:
     name: dev
@@ -52,10 +54,11 @@ deploy-supporting-branch-production:
   variables:
     SSH_REMOTE: ${PRO_SSH_REMOTE}
     COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.prod.yml
+    PUBLIC_HOSTNAME: ${PRO_PUBLIC_HOSTNAME}
     DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${PRO_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
   script:
     - >
-      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
+      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE} PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME}
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
   environment:
     name: pro
@@ -70,10 +73,11 @@ deploy-stable-branch-production:
   variables:
     SSH_REMOTE: ${PRO_SSH_REMOTE}
     COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.prod.yml
+    PUBLIC_HOSTNAME: ${PRO_PUBLIC_HOSTNAME}
     DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${PRO_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
   script:
     - >
-      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
+      deploy.sh IMAGE_TAG=${IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE} PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME}
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
   environment:
     name: pro
