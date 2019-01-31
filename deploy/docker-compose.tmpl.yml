@@ -7,6 +7,7 @@ services:
       - DOCKER_VERNEMQ_ALLOW_ANONYMOUS
       - DOCKER_VERNEMQ_LISTENER__HTTP__DEFAULT
       - DOCKER_IP_ADDRESS
+      - DOCKER_VERNEMQ_DISTRIBUTED_COOKIE
       - DOCKER_VERNEMQ_PLUGINS__VMQ_PASSWD
       - DOCKER_VERNEMQ_PLUGINS__VMQ_ACL
       - DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY
@@ -34,6 +35,7 @@ services:
       replicas: 1
       labels:
         traefik.websocket.frontend.rule: Host:${SUBDOMAIN}.${PUBLIC_HOSTNAME}
+        traefik.metrics.frontend.auth.basic.users: ${UI_AUTH}
         traefik.metrics.frontend.rule: Host:${SUBDOMAIN}.${PUBLIC_HOSTNAME};Path:/metrics
         traefik.backend: vernemq
         traefik.websocket.port: '8080'
@@ -66,7 +68,7 @@ services:
           cpus: '0.1'
           memory: 64M
         reservations:
-          memory: 52M
+          memory: 32M
 
 networks:
   vernemq-net:
