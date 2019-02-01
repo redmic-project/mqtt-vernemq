@@ -17,6 +17,7 @@ services:
     networks:
       - vernemq-net
       - traefik-net
+      - metric-net
     ports:
       - target: 1883
         published: 1883
@@ -34,12 +35,9 @@ services:
       mode: replicated
       replicas: 1
       labels:
-        traefik.websocket.frontend.rule: Host:${SUBDOMAIN}.${PUBLIC_HOSTNAME}
-        traefik.metrics.frontend.auth.basic.users: ${UI_AUTH}
-        traefik.metrics.frontend.rule: Host:${SUBDOMAIN}.${PUBLIC_HOSTNAME};Path:/metrics
+        traefik.frontend.rule: Host:${SUBDOMAIN}.${PUBLIC_HOSTNAME}
         traefik.backend: vernemq
-        traefik.websocket.port: '8080'
-        traefik.metrics.port: '8888'
+        traefik.port: '8080'
       restart_policy:
         delay: 10s
         window: 2m
@@ -78,6 +76,10 @@ networks:
 
   traefik-net:
     name: ${TRAEFIK_NET_NAME:-traefik-net}
+    external: true
+
+  metric-net:
+    name: ${METRIC_NET_NAME:-metric-net}
     external: true
 
 volumes:
