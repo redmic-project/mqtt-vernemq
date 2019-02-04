@@ -1,8 +1,6 @@
 stages:
   - deploy
 
-image: registry.gitlab.com/redmic-project/docker/docker-deploy:${DOCKER_DEPLOY_IMAGE_TAG:-latest}
-
 variables:
   DOCKER_DRIVER: overlay2
   STACK: mqtt
@@ -16,6 +14,7 @@ services:
 
 deploy-supporting-branch-develop:
   stage: deploy
+  image: registry.gitlab.com/redmic-project/docker/docker-deploy:${DOCKER_DEPLOY_IMAGE_TAG:-latest}
   variables:
     SSH_REMOTE: ${DEV_SSH_REMOTE}
     COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.dev.yml
@@ -37,6 +36,7 @@ deploy-supporting-branch-develop:
 
 deploy-stable-branch-develop:
   stage: deploy
+  image: registry.gitlab.com/redmic-project/docker/docker-deploy:${DOCKER_DEPLOY_IMAGE_TAG:-latest}
   variables:
     SSH_REMOTE: ${DEV_SSH_REMOTE}
     COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.dev.yml
@@ -56,6 +56,7 @@ deploy-stable-branch-develop:
 
 deploy-supporting-branch-production:
   stage: deploy
+  image: registry.gitlab.com/redmic-project/docker/docker-deploy:${DOCKER_DEPLOY_IMAGE_TAG:-latest}
   variables:
     SSH_REMOTE: ${PRO_SSH_REMOTE}
     COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.prod.yml
@@ -77,6 +78,7 @@ deploy-supporting-branch-production:
 
 deploy-stable-branch-production:
   stage: deploy
+  image: registry.gitlab.com/redmic-project/docker/docker-deploy:${DOCKER_DEPLOY_IMAGE_TAG:-latest}
   variables:
     SSH_REMOTE: ${PRO_SSH_REMOTE}
     COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.prod.yml
