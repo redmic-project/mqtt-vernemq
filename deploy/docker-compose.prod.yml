@@ -7,6 +7,12 @@ services:
         constraints:
           - node.role == worker
 
+  vmq-redis:
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+
 volumes:
   redis-data-vol:
     name: ${REDIS_DATA_VOL_NAME:-vernemq-redis-data-vol}
