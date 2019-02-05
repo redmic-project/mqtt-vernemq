@@ -1,11 +1,11 @@
 stages:
   - deploy
 
-image: registry.gitlab.com/redmic-project/docker/docker-deploy:${DOCKER_DEPLOY_IMAGE_TAG}
+image: registry.gitlab.com/redmic-project/docker/docker-deploy:${DOCKER_DEPLOY_IMAGE_TAG:-latest}
 
 variables:
   DOCKER_DRIVER: overlay2
-  DOCKER_DEPLOY_IMAGE_TAG: ${DOCKER_DEPLOY_IMAGE_TAG:-latest}
+  DOCKER_DEPLOY_IMAGE_TAG: ${DOCKER_DEPLOY_IMAGE_TAG}
   STACK: mqtt
   SERVICES_TO_CHECK: mqtt_${CI_PROJECT_NAME} mqtt_vmq-redis
   STATUS_CHECK_DELAY: 60
