@@ -2,7 +2,7 @@ version: '3.5'
 
 services:
   vernemq:
-    image: erlio/docker-vernemq:${IMAGE_TAG:-latest}
+    image: erlio/docker-vernemq:${VERNEMQ_IMAGE_TAG:-latest}
     environment:
       - DOCKER_VERNEMQ_ALLOW_ANONYMOUS
       - DOCKER_VERNEMQ_LISTENER__HTTP__DEFAULT
