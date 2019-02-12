@@ -22,11 +22,11 @@ services:
       - target: 1883
         published: 1883
         protocol: tcp
-        mode: host
+        mode: ingress
       - target: 8883
         published: 8883
         protocol: tcp
-        mode: host
+        mode: ingress
     volumes:
       - vernemq-data-vol:/vernemq/data
       - vernemq-etc-vol:/vernemq/etc
