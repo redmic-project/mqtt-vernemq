@@ -2,81 +2,79 @@ version: '3.5'
 
 services:
   vernemq:
-    image: erlio/docker-vernemq:${VERNEMQ_IMAGE_TAG:-latest}
+    image: ${VERNEMQ_IMAGE_NAME:-erlio/docker-vernemq}:${VERNEMQ_IMAGE_TAG:-latest}
     environment:
-      - DOCKER_VERNEMQ_ALLOW_ANONYMOUS
-      - DOCKER_VERNEMQ_LISTENER__HTTP__DEFAULT
-      - DOCKER_IP_ADDRESS
-      - DOCKER_VERNEMQ_DISTRIBUTED_COOKIE
-      - DOCKER_VERNEMQ_PLUGINS__VMQ_PASSWD
-      - DOCKER_VERNEMQ_PLUGINS__VMQ_ACL
-      - DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY
-      - DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_REDIS__ENABLED
-      - DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__HOST
-      - DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__PORT
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS:
+      DOCKER_IP_ADDRESS:
+      DOCKER_VERNEMQ_DISTRIBUTED_COOKIE:
+      DOCKER_VERNEMQ_PLUGINS__VMQ_PASSWD:
+      DOCKER_VERNEMQ_PLUGINS__VMQ_ACL:
+      DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY:
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_REDIS__ENABLED:
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__HOST:
+      DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__PORT:
     networks:
-      - vernemq-net
-      - traefik-net
-      - metric-net
+      vernemq-net:
+      metric-net:
     ports:
-      - target: 1883
-        published: 1883
+      - target: ${MQTT_PORT}
+        published: ${EXTERNAL_MQTT_PORT}
         protocol: tcp
-        mode: ingress
-      - target: 8883
-        published: 8883
+        mode: ${PORT_MODE}
+      - target: ${SECURE_MQTT_PORT}
+        published: ${EXTERNAL_SECURE_MQTT_PORT}
         protocol: tcp
-        mode: ingress
+        mode: ${PORT_MODE}
     volumes:
       - vernemq-data-vol:/vernemq/data
       - vernemq-etc-vol:/vernemq/etc
       - vernemq-log-vol:/vernemq/log
     deploy:
       mode: replicated
-      replicas: 1
-      labels:
-        traefik.frontend.rule: Host:${SUBDOMAIN}.${PUBLIC_HOSTNAME}
-        traefik.backend: vernemq
-        traefik.port: '8080'
+      replicas: ${VERNEMQ_REPLICAS:-1}
       restart_policy:
-        delay: 10s
-        window: 2m
+        delay: ${VERNEMQ_RESTART_DELAY:-10s}
+      update_config:
+        delay: ${VERNEMQ_UPDATE_DELAY:-1m}
+      labels:
+        traefik.frontend.rule: Host:${TRAEFIK_SUBDOMAIN:-vernemq}.${PUBLIC_HOSTNAME};AddPrefix:/status
+        traefik.backend: vernemq
+        traefik.port: '${HTTP_PORT}'
       resources:
         limits:
-          cpus: '1'
-          memory: 256M
+          cpus: '${VERNEMQ_RESOURCES_LIMITS_CPUS:-1}'
+          memory: ${VERNEMQ_RESOURCES_LIMITS_MEMORY:-256M}
         reservations:
-          memory: 205M
+          cpus: '${VERNEMQ_RESOURCES_RESERVATIONS_CPUS:-0.001}'
+          memory: ${VERNEMQ_RESOURCES_RESERVATIONS_MEMORY:-80M}
 
   vmq-redis:
-    image: redis:${REDIS_IMAGE_TAG:-latest}
+    image: ${REDIS_IMAGE_NAME:-redis}:${REDIS_IMAGE_TAG:-latest}
     command: redis-server --appendonly yes
     networks:
-      - vernemq-net
+      vernemq-net:
     volumes:
       - redis-data-vol:/data
     deploy:
       mode: replicated
-      replicas: 1
+      replicas: ${REDIS_REPLICAS:-1}
       restart_policy:
-        delay: 10s
-        window: 1m
+        delay: ${REDIS_RESTART_DELAY:-5s}
+      update_config:
+        delay: ${REDIS_UPDATE_DELAY:-1m}
       resources:
         limits:
-          cpus: '0.1'
-          memory: 64M
+          cpus: '${REDIS_RESOURCES_LIMITS_CPUS:-0.1}'
+          memory: ${REDIS_RESOURCES_LIMITS_MEMORY:-64M}
         reservations:
-          memory: 32M
+          cpus: '${REDIS_RESOURCES_RESERVATIONS_CPUS:-0.001}'
+          memory: ${REDIS_RESOURCES_RESERVATIONS_MEMORY:-16M}
 
 networks:
   vernemq-net:
     name: ${VERNEMQ_NET_NAME:-vernemq-net}
-    driver: overlay
-    attachable: ${VERNEMQ_NET_ATTACHABLE:-true}
-
-  traefik-net:
-    name: ${TRAEFIK_NET_NAME:-traefik-net}
-    external: true
+    driver: ${VERNEMQ_NET_DRIVER:-overlay}
+    attachable: ${VERNEMQ_NET_ATTACHABLE:-false}
 
   metric-net:
     name: ${METRIC_NET_NAME:-metric-net}

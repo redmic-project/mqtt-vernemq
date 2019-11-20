@@ -1,95 +1,12 @@
+include:
+  - project: 'redmic-project/gitlab-ci-templates'
+    ref: master
+    file: '/deployment.yml'
+
 stages:
   - deploy
 
-image: registry.gitlab.com/redmic-project/docker/docker-deploy:${DOCKER_DEPLOY_IMAGE_TAG}
-
 variables:
-  DOCKER_DRIVER: overlay2
   STACK: mqtt
   SERVICES_TO_CHECK: mqtt_${CI_PROJECT_NAME} mqtt_vmq-redis
   STATUS_CHECK_DELAY: 60
-  VERNEMQ_IMAGE_TAG: ${VERNEMQ_IMAGE_TAG:-latest}
-  REDIS_IMAGE_TAG: ${REDIS_IMAGE_TAG:-latest}
-
-services:
-  - docker:dind
-
-deploy-supporting-branch-develop:
-  stage: deploy
-  variables:
-    SSH_REMOTE: ${DEV_SSH_REMOTE}
-    COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.dev.yml
-    PUBLIC_HOSTNAME: ${DEV_PUBLIC_HOSTNAME}
-    DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${DEV_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-    DOCKER_VERNEMQ_DISTRIBUTED_COOKIE: ${DEV_DOCKER_VERNEMQ_DISTRIBUTED_COOKIE}
-  script:
-    - >
-      deploy.sh VERNEMQ_IMAGE_TAG=${VERNEMQ_IMAGE_TAG} REDIS_IMAGE_TAG=${REDIS_IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
-      PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME} DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-      DOCKER_VERNEMQ_DISTRIBUTED_COOKIE=${DOCKER_VERNEMQ_DISTRIBUTED_COOKIE}
-  environment:
-    name: dev
-  only:
-    - branches
-  except:
-    - master
-  when: manual
-
-deploy-stable-branch-develop:
-  stage: deploy
-  variables:
-    SSH_REMOTE: ${DEV_SSH_REMOTE}
-    COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.dev.yml
-    PUBLIC_HOSTNAME: ${DEV_PUBLIC_HOSTNAME}
-    DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${DEV_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-    DOCKER_VERNEMQ_DISTRIBUTED_COOKIE: ${DEV_DOCKER_VERNEMQ_DISTRIBUTED_COOKIE}
-  script:
-    - >
-      deploy.sh VERNEMQ_IMAGE_TAG=${VERNEMQ_IMAGE_TAG} REDIS_IMAGE_TAG=${REDIS_IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
-      PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME} DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-      DOCKER_VERNEMQ_DISTRIBUTED_COOKIE=${DOCKER_VERNEMQ_DISTRIBUTED_COOKIE}
-  environment:
-    name: dev
-  only:
-    - master
-  when: manual
-
-deploy-supporting-branch-production:
-  stage: deploy
-  variables:
-    SSH_REMOTE: ${PRO_SSH_REMOTE}
-    COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.prod.yml
-    PUBLIC_HOSTNAME: ${PRO_PUBLIC_HOSTNAME}
-    DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${PRO_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-    DOCKER_VERNEMQ_DISTRIBUTED_COOKIE: ${PRO_DOCKER_VERNEMQ_DISTRIBUTED_COOKIE}
-  script:
-    - >
-      deploy.sh VERNEMQ_IMAGE_TAG=${VERNEMQ_IMAGE_TAG} REDIS_IMAGE_TAG=${REDIS_IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
-      PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME} DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-      DOCKER_VERNEMQ_DISTRIBUTED_COOKIE=${DOCKER_VERNEMQ_DISTRIBUTED_COOKIE}
-  environment:
-    name: pro
-  only:
-    - branches
-  except:
-    - master
-  when: manual
-
-deploy-stable-branch-production:
-  stage: deploy
-  variables:
-    SSH_REMOTE: ${PRO_SSH_REMOTE}
-    COMPOSE_FILE: docker-compose.tmpl.yml:docker-compose.prod.yml
-    PUBLIC_HOSTNAME: ${PRO_PUBLIC_HOSTNAME}
-    DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${PRO_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-    DOCKER_VERNEMQ_DISTRIBUTED_COOKIE: ${PRO_DOCKER_VERNEMQ_DISTRIBUTED_COOKIE}
-  script:
-    - >
-      deploy.sh VERNEMQ_IMAGE_TAG=${VERNEMQ_IMAGE_TAG} REDIS_IMAGE_TAG=${REDIS_IMAGE_TAG} COMPOSE_FILE=${COMPOSE_FILE}
-      PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME} DOCKER_VERNEMQ_ALLOW_ANONYMOUS=${DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-      DOCKER_VERNEMQ_DISTRIBUTED_COOKIE=${DOCKER_VERNEMQ_DISTRIBUTED_COOKIE}
-  environment:
-    name: pro
-  only:
-    - master
-  when: manual
