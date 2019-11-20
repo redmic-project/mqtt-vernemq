@@ -39,7 +39,7 @@ services:
       labels:
         traefik.frontend.rule: Host:${TRAEFIK_SUBDOMAIN:-vernemq}.${PUBLIC_HOSTNAME};AddPrefix:/status
         traefik.backend: vernemq
-        traefik.port: '${HTTP_PORT}'
+        traefik.port: '${HTTP_PORT:-8888}'
       resources:
         limits:
           cpus: '${VERNEMQ_RESOURCES_LIMITS_CPUS:-1}'
