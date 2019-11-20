@@ -2,7 +2,7 @@ version: '3.5'
 
 services:
   vernemq:
-    image: ${VERNEMQ_IMAGE_NAME:-erlio/docker-vernemq}:${VERNEMQ_IMAGE_TAG:-latest}
+    image: ${VERNEMQ_IMAGE_NAME:-erlio/docker-vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
     environment:
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS:
       DOCKER_IP_ADDRESS:
@@ -16,6 +16,7 @@ services:
     networks:
       vernemq-net:
       metric-net:
+      traefik-net:
     ports:
       - target: ${MQTT_PORT}
         published: ${EXTERNAL_MQTT_PORT}
@@ -37,7 +38,7 @@ services:
       update_config:
         delay: ${VERNEMQ_UPDATE_DELAY:-1m}
       labels:
-        traefik.frontend.rule: Host:${TRAEFIK_SUBDOMAIN:-vernemq}.${PUBLIC_HOSTNAME};AddPrefix:/status
+        traefik.frontend.rule: Host:${TRAEFIK_SUBDOMAIN:-vernemq}.${PUBLIC_HOSTNAME};PathPrefix:/status
         traefik.backend: vernemq
         traefik.port: '${HTTP_PORT:-8888}'
       resources:
@@ -78,6 +79,10 @@ networks:
 
   metric-net:
     name: ${METRIC_NET_NAME:-metric-net}
+    external: true
+
+  traefik-net:
+    name: ${TRAEFIK_NET_NAME:-traefik-net}
     external: true
 
 volumes:
