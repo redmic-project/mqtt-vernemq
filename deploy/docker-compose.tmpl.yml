@@ -1,6 +1,28 @@
 version: '3.5'
 
 services:
+  vmq-redis:
+    image: ${REDIS_IMAGE_NAME:-redis}:${REDIS_IMAGE_TAG:-alpine}
+    command: redis-server --appendonly yes
+    networks:
+      vernemq-net:
+    volumes:
+      - redis-data-vol:/data
+    deploy:
+      mode: replicated
+      replicas: ${REDIS_REPLICAS:-1}
+      restart_policy:
+        delay: ${REDIS_RESTART_DELAY:-5s}
+      update_config:
+        delay: ${REDIS_UPDATE_DELAY:-1m}
+      resources:
+        limits:
+          cpus: '${REDIS_RESOURCES_LIMITS_CPUS:-0.1}'
+          memory: ${REDIS_RESOURCES_LIMITS_MEMORY:-32M}
+        reservations:
+          cpus: '${REDIS_RESOURCES_RESERVATIONS_CPUS:-0.001}'
+          memory: ${REDIS_RESOURCES_RESERVATIONS_MEMORY:-8M}
+
   vernemq:
     image: ${VERNEMQ_IMAGE_NAME:-erlio/docker-vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
     environment:
@@ -48,28 +70,6 @@ services:
         reservations:
           cpus: '${VERNEMQ_RESOURCES_RESERVATIONS_CPUS:-0.001}'
           memory: ${VERNEMQ_RESOURCES_RESERVATIONS_MEMORY:-80M}
-
-  vmq-redis:
-    image: ${REDIS_IMAGE_NAME:-redis}:${REDIS_IMAGE_TAG:-latest}
-    command: redis-server --appendonly yes
-    networks:
-      vernemq-net:
-    volumes:
-      - redis-data-vol:/data
-    deploy:
-      mode: replicated
-      replicas: ${REDIS_REPLICAS:-1}
-      restart_policy:
-        delay: ${REDIS_RESTART_DELAY:-5s}
-      update_config:
-        delay: ${REDIS_UPDATE_DELAY:-1m}
-      resources:
-        limits:
-          cpus: '${REDIS_RESOURCES_LIMITS_CPUS:-0.1}'
-          memory: ${REDIS_RESOURCES_LIMITS_MEMORY:-64M}
-        reservations:
-          cpus: '${REDIS_RESOURCES_RESERVATIONS_CPUS:-0.001}'
-          memory: ${REDIS_RESOURCES_RESERVATIONS_MEMORY:-16M}
 
 networks:
   vernemq-net:
