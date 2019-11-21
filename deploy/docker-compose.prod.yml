@@ -1,13 +1,13 @@
 version: '3.5'
 
 services:
-  vernemq:
+  vmq-redis:
     deploy:
       placement:
         constraints:
           - node.role == worker
 
-  vmq-redis:
+  vernemq:
     deploy:
       placement:
         constraints:

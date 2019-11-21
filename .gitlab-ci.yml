@@ -9,5 +9,5 @@ stages:
 .deploy:
   variables:
     STACK: mqtt
-    SERVICES_TO_CHECK: mqtt_${CI_PROJECT_NAME} mqtt_vmq-redis
+    SERVICES_TO_CHECK: mqtt_vmq-redis mqtt_${CI_PROJECT_NAME}
     STATUS_CHECK_DELAY: 60
