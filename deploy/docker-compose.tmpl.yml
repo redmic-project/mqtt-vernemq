@@ -60,7 +60,8 @@ services:
       update_config:
         delay: ${VERNEMQ_UPDATE_DELAY:-1m}
       labels:
-        traefik.frontend.rule: Host:${TRAEFIK_SUBDOMAIN:-vernemq}.${PUBLIC_HOSTNAME};PathPrefix:/status
+        traefik.root.frontend.rule: Host:${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME};Path:/;AddPrefix:/status
+        traefik.resources.frontend.rule: Host:${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME};PathPrefix:/status/{path:js|css|img},/status.json
         traefik.backend: vernemq
         traefik.port: '${HTTP_PORT:-8888}'
       resources:
