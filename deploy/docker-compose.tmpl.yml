@@ -24,7 +24,7 @@ services:
           memory: ${REDIS_RESOURCES_RESERVATIONS_MEMORY:-8M}
 
   vernemq:
-    image: ${VERNEMQ_IMAGE_NAME:-erlio/docker-vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
+    image: ${VERNEMQ_IMAGE_NAME:-vernemq/vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
     environment:
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS:
       DOCKER_IP_ADDRESS:
