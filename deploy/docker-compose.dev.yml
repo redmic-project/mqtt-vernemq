@@ -1,5 +1,12 @@
 version: '3.5'
 
+services:
+  vmq-redis:
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == ${VMQ_REDIS_PLACEMENT_CONSTRAINTS_NODE_HOSTNAME:-hostname}
+
 volumes:
   redis-data-vol:
     name: ${REDIS_DATA_VOL_NAME}

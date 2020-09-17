@@ -24,7 +24,7 @@ services:
           memory: ${REDIS_RESOURCES_RESERVATIONS_MEMORY:-8M}
 
   vernemq:
-    image: ${VERNEMQ_IMAGE_NAME:-erlio/docker-vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
+    image: ${VERNEMQ_IMAGE_NAME:-vernemq/vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
     environment:
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS:
       DOCKER_IP_ADDRESS:
@@ -81,10 +81,12 @@ networks:
 
   metric-net:
     name: ${METRIC_NET_NAME:-metric-net}
+    driver: ${METRIC_NET_DRIVER:-overlay}
     external: true
 
   traefik-net:
     name: ${TRAEFIK_NET_NAME:-traefik-net}
+    driver: ${TRAEFIK_NET_DRIVER:-overlay}
     external: true
 
 volumes:
