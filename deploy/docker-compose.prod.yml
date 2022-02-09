@@ -14,6 +14,19 @@ services:
           - node.role == worker
 
 volumes:
+  vernemq-data-vol:
+    name: ${VERNEMQ_DATA_VOL_NAME}
+    driver: 'cloudstor:aws'
+    driver_opts:
+      backing: shared
+      perfmode: maxio
+
+  vernemq-conf-vol:
+    name: ${VERNEMQ_CONF_VOL_NAME}
+    driver: 'cloudstor:aws'
+    driver_opts:
+      backing: shared
+
   redis-data-vol:
     name: ${REDIS_DATA_VOL_NAME}
     driver: 'cloudstor:aws'
