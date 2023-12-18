@@ -1,3 +1,67 @@
+x-vernemq-base: &vernemq-base
+  image: ${VERNEMQ_IMAGE_NAME:-vernemq/vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
+  networks:
+    vernemq-net:
+    metric-net:
+    traefik-net:
+  ports:
+    - target: ${MQTT_PORT}
+      published: ${EXTERNAL_MQTT_PORT}
+      protocol: tcp
+      mode: ${PORT_MODE}
+    - target: ${MQTTWS_PORT}
+      published: ${EXTERNAL_MQTTWS_PORT}
+      protocol: tcp
+      mode: ${PORT_MODE}
+  healthcheck:
+    test: wget -q -O - http://127.0.0.1:${HTTP_PORT}/health
+    interval: ${HEALTHCHECK_INTERVAL:-30s}
+    timeout: ${HEALTHCHECK_TIMEOUT:-15s}
+    retries: ${HEALTHCHECK_RETRIES:-5}
+    start_period: ${HEALTHCHECK_START_PERIOD:-1m}
+
+x-vernemq-environment: &vernemq-environment
+  DOCKER_VERNEMQ_ALLOW_ANONYMOUS:
+  DOCKER_IP_ADDRESS:
+  DOCKER_VERNEMQ_PLUGINS__VMQ_PASSWD:
+  DOCKER_VERNEMQ_PLUGINS__VMQ_ACL:
+  DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY:
+  DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_REDIS__ENABLED:
+  DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__HOST:
+  DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__PORT:
+  DOCKER_VERNEMQ_DISTRIBUTED_COOKIE:
+  DOCKER_VERNEMQ_NODENAME: vernemq-{{.Task.Slot}}
+  DOCKER_VERNEMQ_SWARM:
+  DOCKER_VERNEMQ_ACCEPT_EULA:
+
+x-vernemq-deploy: &vernemq-deploy
+  mode: replicated
+  placement:
+    max_replicas_per_node: 1
+  restart_policy:
+    delay: ${VERNEMQ_RESTART_DELAY:-10s}
+  update_config:
+    delay: ${VERNEMQ_UPDATE_DELAY:-5m}
+  labels:
+    traefik.enable: ${TRAEFIK_ENABLE:-true}
+    traefik.http.routers.vernemq.entrypoints: ${TRAEFIK_ENTRYPOINT:-http}
+    traefik.http.routers.vernemq.rule: Host(`${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME}`)
+    traefik.http.middlewares.vernemq-root-redirect.redirectregex.regex: ^(.*://${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME})/$$
+    traefik.http.middlewares.vernemq-root-redirect.redirectregex.replacement: $$1/status
+    traefik.http.middlewares.vernemq-root-redirect.redirectregex.permanent: 'true'
+    traefik.http.routers.vernemq.middlewares: vernemq-root-redirect
+    traefik.http.services.vernemq.loadbalancer.server.port: ${HTTP_PORT}
+    traefik.http.services.vernemq.loadbalancer.healthcheck.path: ${TRAEFIK_HEALTHCHECK_PATH:-/health}
+    traefik.http.services.vernemq.loadbalancer.healthcheck.interval: ${TRAEFIK_HEALTHCHECK_INTERVAL:-1m}
+    traefik.http.services.vernemq.loadbalancer.healthcheck.timeout: ${TRAEFIK_HEALTHCHECK_TIMEOUT:-15s}
+  resources:
+    limits:
+      cpus: '${VERNEMQ_RESOURCES_LIMITS_CPUS:-1}'
+      memory: ${VERNEMQ_RESOURCES_LIMITS_MEMORY:-256M}
+    reservations:
+      cpus: '${VERNEMQ_RESOURCES_RESERVATIONS_CPUS:-0.1}'
+      memory: ${VERNEMQ_RESOURCES_RESERVATIONS_MEMORY:-128M}
+
 services:
   vmq-redis:
     image: ${REDIS_IMAGE_NAME:-redis}:${REDIS_IMAGE_TAG:-alpine}
@@ -21,74 +85,32 @@ services:
           cpus: '${REDIS_RESOURCES_RESERVATIONS_CPUS:-0.001}'
           memory: ${REDIS_RESOURCES_RESERVATIONS_MEMORY:-8M}
 
-  vernemq:
-    image: ${VERNEMQ_IMAGE_NAME:-vernemq/vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
+  vernemq0:
+    << : *vernemq-base
     environment:
-      DOCKER_VERNEMQ_ALLOW_ANONYMOUS:
-      DOCKER_IP_ADDRESS:
-      DOCKER_VERNEMQ_PLUGINS__VMQ_PASSWD:
-      DOCKER_VERNEMQ_PLUGINS__VMQ_ACL:
-      DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY:
-      DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_REDIS__ENABLED:
-      DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__HOST:
-      DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__PORT:
-      DOCKER_VERNEMQ_DISTRIBUTED_COOKIE:
-      DOCKER_VERNEMQ_NODENAME: vernemq-{{.Task.Slot}}
-      DOCKER_VERNEMQ_DISCOVERY_NODE: vernemq-1
-      DOCKER_VERNEMQ_SWARM:
-      DOCKER_VERNEMQ_ACCEPT_EULA:
-    hostname: vernemq-{{.Task.Slot}}
-    networks:
-      vernemq-net:
-      metric-net:
-      traefik-net:
-    ports:
-      - target: ${MQTT_PORT}
-        published: ${EXTERNAL_MQTT_PORT}
-        protocol: tcp
-        mode: ${PORT_MODE}
-      - target: ${MQTTWS_PORT}
-        published: ${EXTERNAL_MQTTWS_PORT}
-        protocol: tcp
-        mode: ${PORT_MODE}
-    healthcheck:
-      test: wget -q -O - http://127.0.0.1:${HTTP_PORT}/health
-      interval: ${HEALTHCHECK_INTERVAL:-30s}
-      timeout: ${HEALTHCHECK_TIMEOUT:-15s}
-      retries: ${HEALTHCHECK_RETRIES:-5}
-      start_period: ${HEALTHCHECK_START_PERIOD:-1m}
+      << : *vernemq-environment
+    hostname: vernemq0
+    volumes:
+      - vernemq0-data-vol:/vernemq/data
+      - vernemq0-conf-vol:/vernemq/etc
+      - vernemq0-log-vol:/vernemq/log
+    deploy:
+      << : *vernemq-deploy
+      replicas: 1
+
+  vernemq:
+    << : *vernemq-base
+    environment:
+      << : *vernemq-environment
+      DOCKER_VERNEMQ_DISCOVERY_NODE: vernemq0
+    hostname: vernemq{{.Task.Slot}}
     volumes:
       - vernemq-data-vol:/vernemq/data
       - vernemq-conf-vol:/vernemq/etc
       - vernemq-log-vol:/vernemq/log
     deploy:
-      mode: replicated
+      << : *vernemq-deploy
       replicas: ${VERNEMQ_REPLICAS:-1}
-      placement:
-        max_replicas_per_node: 1
-      restart_policy:
-        delay: ${VERNEMQ_RESTART_DELAY:-10s}
-      update_config:
-        delay: ${VERNEMQ_UPDATE_DELAY:-5m}
-      labels:
-        traefik.enable: ${TRAEFIK_ENABLE:-true}
-        traefik.http.routers.vernemq.entrypoints: ${TRAEFIK_ENTRYPOINT:-http}
-        traefik.http.routers.vernemq.rule: Host(`${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME}`)
-        traefik.http.middlewares.vernemq-root-redirect.redirectregex.regex: ^(.*://${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME})/$$
-        traefik.http.middlewares.vernemq-root-redirect.redirectregex.replacement: $$1/status
-        traefik.http.middlewares.vernemq-root-redirect.redirectregex.permanent: 'true'
-        traefik.http.routers.vernemq.middlewares: vernemq-root-redirect
-        traefik.http.services.vernemq.loadbalancer.server.port: ${HTTP_PORT}
-        traefik.http.services.vernemq.loadbalancer.healthcheck.path: ${TRAEFIK_HEALTHCHECK_PATH:-/health}
-        traefik.http.services.vernemq.loadbalancer.healthcheck.interval: ${TRAEFIK_HEALTHCHECK_INTERVAL:-1m}
-        traefik.http.services.vernemq.loadbalancer.healthcheck.timeout: ${TRAEFIK_HEALTHCHECK_TIMEOUT:-15s}
-      resources:
-        limits:
-          cpus: '${VERNEMQ_RESOURCES_LIMITS_CPUS:-1}'
-          memory: ${VERNEMQ_RESOURCES_LIMITS_MEMORY:-256M}
-        reservations:
-          cpus: '${VERNEMQ_RESOURCES_RESERVATIONS_CPUS:-0.1}'
-          memory: ${VERNEMQ_RESOURCES_RESERVATIONS_MEMORY:-128M}
 
 networks:
   vernemq-net:
@@ -107,5 +129,8 @@ networks:
     external: true
 
 volumes:
+  vernemq0-log-vol:
+    name: ${VERNEMQ_LOG_VOL_NAME}-0
+
   vernemq-log-vol:
-    name: ${VERNEMQ_LOG_VOL_NAME:-vernemq-log-vol}-{{.Task.Slot}}
+    name: ${VERNEMQ_LOG_VOL_NAME}-{{.Task.Slot}}
