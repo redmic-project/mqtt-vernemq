@@ -49,6 +49,12 @@ services:
         published: ${EXTERNAL_MQTTWS_PORT}
         protocol: tcp
         mode: ${PORT_MODE}
+    healthcheck:
+      test: wget -q -O - http://127.0.0.1:${HTTP_PORT}/health
+      interval: ${HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${HEALTHCHECK_TIMEOUT:-15s}
+      retries: ${HEALTHCHECK_RETRIES:-5}
+      start_period: ${HEALTHCHECK_START_PERIOD:-1m}
     volumes:
       - vernemq-data-vol:/vernemq/data
       - vernemq-conf-vol:/vernemq/etc
