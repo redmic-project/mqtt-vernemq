@@ -1,24 +1,24 @@
 volumes:
   vernemq-data-vol:
-    name: ${VERNEMQ_DATA_VOL_NAME}
+    name: ${VERNEMQ_DATA_VOL_NAME}-{{.Task.Slot}}
     driver: ${VOL_DRIVER}
     driver_opts:
       type: ${VOL_TYPE}
       o: addr=${VOL_ADDR},${VOL_OPTS}
-      device: ${VERNEMQ_DATA_VOL_DEVICE}
+      device: ${VERNEMQ_DATA_VOL_DEVICE}{{.Task.Slot}}
 
   vernemq-conf-vol:
-    name: ${VERNEMQ_CONF_VOL_NAME}
+    name: ${VERNEMQ_CONF_VOL_NAME}-{{.Task.Slot}}
     driver: ${VOL_DRIVER}
     driver_opts:
       type: ${VOL_TYPE}
       o: addr=${VOL_ADDR},${VOL_OPTS}
-      device: ${VERNEMQ_CONF_VOL_DEVICE}
+      device: ${VERNEMQ_CONF_VOL_DEVICE}{{.Task.Slot}}
 
   redis-data-vol:
-    name: ${REDIS_DATA_VOL_NAME}
+    name: ${REDIS_DATA_VOL_NAME}-{{.Task.Slot}}
     driver: ${VOL_DRIVER}
     driver_opts:
       type: ${VOL_TYPE}
       o: addr=${VOL_ADDR},${VOL_OPTS}
-      device: ${REDIS_DATA_VOL_DEVICE}
+      device: ${REDIS_DATA_VOL_DEVICE}{{.Task.Slot}}

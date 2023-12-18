@@ -108,4 +108,4 @@ networks:
 
 volumes:
   vernemq-log-vol:
-    name: ${VERNEMQ_LOG_VOL_NAME:-vernemq-log-vol}
+    name: ${VERNEMQ_LOG_VOL_NAME:-vernemq-log-vol}-{{.Task.Slot}}
