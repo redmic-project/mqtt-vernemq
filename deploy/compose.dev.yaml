@@ -16,9 +16,9 @@ volumes:
       device: ${VERNEMQ_CONF_VOL_DEVICE}{{.Task.Slot}}
 
   redis-data-vol:
-    name: ${REDIS_DATA_VOL_NAME}-{{.Task.Slot}}
+    name: ${REDIS_DATA_VOL_NAME}
     driver: ${VOL_DRIVER}
     driver_opts:
       type: ${VOL_TYPE}
       o: addr=${VOL_ADDR},${VOL_OPTS}
-      device: ${REDIS_DATA_VOL_DEVICE}{{.Task.Slot}}
+      device: ${REDIS_DATA_VOL_DEVICE}

@@ -26,7 +26,7 @@ volumes:
       backing: shared
 
   redis-data-vol:
-    name: ${REDIS_DATA_VOL_NAME}-{{.Task.Slot}}
+    name: ${REDIS_DATA_VOL_NAME}
     driver: 'cloudstor:aws'
     driver_opts:
       backing: shared
