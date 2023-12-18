@@ -28,14 +28,18 @@ services:
     environment:
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS:
       DOCKER_IP_ADDRESS:
-      DOCKER_VERNEMQ_DISTRIBUTED_COOKIE:
       DOCKER_VERNEMQ_PLUGINS__VMQ_PASSWD:
       DOCKER_VERNEMQ_PLUGINS__VMQ_ACL:
       DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY:
       DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_REDIS__ENABLED:
       DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__HOST:
       DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__PORT:
+      DOCKER_VERNEMQ_DISTRIBUTED_COOKIE:
+      DOCKER_VERNEMQ_NODENAME: vernemq-{{.Task.Slot}}
+      DOCKER_VERNEMQ_DISCOVERY_NODE: vernemq-1
+      DOCKER_VERNEMQ_SWARM:
       DOCKER_VERNEMQ_ACCEPT_EULA:
+    hostname: vernemq-{{.Task.Slot}}
     networks:
       vernemq-net:
       metric-net:
@@ -62,10 +66,12 @@ services:
     deploy:
       mode: replicated
       replicas: ${VERNEMQ_REPLICAS:-1}
+      placement:
+        max_replicas_per_node: 1
       restart_policy:
         delay: ${VERNEMQ_RESTART_DELAY:-10s}
       update_config:
-        delay: ${VERNEMQ_UPDATE_DELAY:-1m}
+        delay: ${VERNEMQ_UPDATE_DELAY:-5m}
       labels:
         traefik.enable: ${TRAEFIK_ENABLE:-true}
         traefik.http.routers.vernemq.entrypoints: ${TRAEFIK_ENTRYPOINT:-http}
@@ -83,7 +89,7 @@ services:
           cpus: '${VERNEMQ_RESOURCES_LIMITS_CPUS:-1}'
           memory: ${VERNEMQ_RESOURCES_LIMITS_MEMORY:-256M}
         reservations:
-          cpus: '${VERNEMQ_RESOURCES_RESERVATIONS_CPUS:-0.001}'
+          cpus: '${VERNEMQ_RESOURCES_RESERVATIONS_CPUS:-0.1}'
           memory: ${VERNEMQ_RESOURCES_RESERVATIONS_MEMORY:-128M}
 
 networks:

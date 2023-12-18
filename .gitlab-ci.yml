@@ -9,7 +9,3 @@ stages:
 .deploy:
   variables:
     STACK: mqtt
-    STATUS_CHECK_DELAY: 60
-    DD_TRAEFIK_SUBDOMAIN: ${CI_PROJECT_NAME}
-  environment:
-    url: https://${DD_TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME}
