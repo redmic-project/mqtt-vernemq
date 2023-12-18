@@ -61,10 +61,17 @@ services:
       update_config:
         delay: ${VERNEMQ_UPDATE_DELAY:-1m}
       labels:
-        traefik.root.frontend.rule: Host:${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME};Path:/;AddPrefix:/status
-        traefik.resources.frontend.rule: Host:${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME};PathPrefix:/status/{path:js|css|img},/status.json
-        traefik.backend: vernemq
-        traefik.port: '${HTTP_PORT}'
+        traefik.enable: ${TRAEFIK_ENABLE:-true}
+        traefik.http.routers.vernemq.entrypoints: ${TRAEFIK_ENTRYPOINT:-http}
+        traefik.http.routers.vernemq.rule: Host(`${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME}`)
+        traefik.http.middlewares.vernemq-root-redirect.redirectregex.regex: ^(.*://${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME})/$$
+        traefik.http.middlewares.vernemq-root-redirect.redirectregex.replacement: $$1/status
+        traefik.http.middlewares.vernemq-root-redirect.redirectregex.permanent: 'true'
+        traefik.http.routers.vernemq.middlewares: vernemq-root-redirect
+        traefik.http.services.vernemq.loadbalancer.server.port: ${HTTP_PORT}
+        traefik.http.services.vernemq.loadbalancer.healthcheck.path: ${TRAEFIK_HEALTHCHECK_PATH:-/health}
+        traefik.http.services.vernemq.loadbalancer.healthcheck.interval: ${TRAEFIK_HEALTHCHECK_INTERVAL:-1m}
+        traefik.http.services.vernemq.loadbalancer.healthcheck.timeout: ${TRAEFIK_HEALTHCHECK_TIMEOUT:-15s}
       resources:
         limits:
           cpus: '${VERNEMQ_RESOURCES_LIMITS_CPUS:-1}'
