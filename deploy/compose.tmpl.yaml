@@ -4,15 +4,6 @@ x-vernemq-base: &vernemq-base
     vernemq-net:
     metric-net:
     traefik-net:
-  ports:
-    - target: ${MQTT_PORT}
-      published: ${EXTERNAL_MQTT_PORT}
-      protocol: tcp
-      mode: ${PORT_MODE}
-    - target: ${MQTTWS_PORT}
-      published: ${EXTERNAL_MQTTWS_PORT}
-      protocol: tcp
-      mode: ${PORT_MODE}
   healthcheck:
     test: wget -q -O - http://127.0.0.1:${HTTP_PORT}/health
     interval: ${HEALTHCHECK_INTERVAL:-30s}
@@ -44,16 +35,29 @@ x-vernemq-deploy: &vernemq-deploy
     delay: ${VERNEMQ_UPDATE_DELAY:-5m}
   labels:
     traefik.enable: ${TRAEFIK_ENABLE:-true}
-    traefik.http.routers.vernemq.entrypoints: ${TRAEFIK_ENTRYPOINT:-http}
-    traefik.http.routers.vernemq.rule: Host(`${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME}`)
-    traefik.http.middlewares.vernemq-root-redirect.redirectregex.regex: ^(.*://${TRAEFIK_SUBDOMAIN}.${PUBLIC_HOSTNAME})/$$
+
+    traefik.http.routers.vernemq-dashboard.entrypoints: ${TRAEFIK_HTTP_ENTRYPOINT}
+    traefik.http.routers.vernemq-dashboard.rule: Host(`${TRAEFIK_HTTP_SUBDOMAIN}.${PUBLIC_HOSTNAME}`)
+    traefik.http.middlewares.vernemq-root-redirect.redirectregex.regex: ^(.*://${TRAEFIK_HTTP_SUBDOMAIN}.${PUBLIC_HOSTNAME})/$$
     traefik.http.middlewares.vernemq-root-redirect.redirectregex.replacement: $$1/status
     traefik.http.middlewares.vernemq-root-redirect.redirectregex.permanent: 'true'
-    traefik.http.routers.vernemq.middlewares: vernemq-root-redirect
-    traefik.http.services.vernemq.loadbalancer.server.port: ${HTTP_PORT}
-    traefik.http.services.vernemq.loadbalancer.healthcheck.path: ${TRAEFIK_HEALTHCHECK_PATH:-/health}
-    traefik.http.services.vernemq.loadbalancer.healthcheck.interval: ${TRAEFIK_HEALTHCHECK_INTERVAL:-1m}
-    traefik.http.services.vernemq.loadbalancer.healthcheck.timeout: ${TRAEFIK_HEALTHCHECK_TIMEOUT:-15s}
+    traefik.http.routers.vernemq-dashboard.middlewares: vernemq-root-redirect
+    traefik.http.services.vernemq-dashboard.loadbalancer.server.port: ${HTTP_PORT}
+    traefik.http.services.vernemq-dashboard.loadbalancer.healthcheck.path: ${TRAEFIK_HEALTHCHECK_PATH:-/health}
+    traefik.http.services.vernemq-dashboard.loadbalancer.healthcheck.interval: ${TRAEFIK_HEALTHCHECK_INTERVAL:-1m}
+    traefik.http.services.vernemq-dashboard.loadbalancer.healthcheck.timeout: ${TRAEFIK_HEALTHCHECK_TIMEOUT:-15s}
+    traefik.http.routers.vernemq-dashboard.service: vernemq-dashboard
+
+    traefik.tcp.routers.vernemq-mqtt.entrypoints: ${TRAEFIK_MQTT_ENTRYPOINT}
+    traefik.tcp.routers.vernemq-mqtt.rule: HostSNI(`*`)
+    traefik.tcp.services.vernemq-mqtt.loadbalancer.server.port: ${MQTT_PORT}
+    traefik.tcp.services.vernemq-mqtt.loadbalancer.proxyprotocol: 'true'
+    traefik.tcp.routers.vernemq-mqtt.service: vernemq-mqtt
+
+    traefik.http.routers.vernemq-mqttws.entrypoints: ${TRAEFIK_HTTP_ENTRYPOINT}
+    traefik.http.routers.vernemq-mqttws.rule: Host(`${TRAEFIK_MQTT_SUBDOMAIN}.${PUBLIC_HOSTNAME}`)
+    traefik.http.services.vernemq-mqttws.loadbalancer.server.port: ${MQTTWS_PORT}
+    traefik.http.routers.vernemq-mqttws.service: vernemq-mqttws
   resources:
     limits:
       cpus: '${VERNEMQ_RESOURCES_LIMITS_CPUS:-1}'
