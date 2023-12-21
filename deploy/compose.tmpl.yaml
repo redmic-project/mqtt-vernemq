@@ -94,6 +94,7 @@ services:
     << : *vernemq-base
     environment:
       << : *vernemq-environment
+      DOCKER_VERNEMQ_LISTENER_VMQ_CLUSTERING: 'vernemq0:44053'
     hostname: vernemq0
     networks:
       << : *vernemq-networks
@@ -113,6 +114,7 @@ services:
     environment:
       << : *vernemq-environment
       DOCKER_VERNEMQ_DISCOVERY_NODE:
+      DOCKER_VERNEMQ_LISTENER_VMQ_CLUSTERING: 'vernemq{{.Task.Slot}}:44053'
     hostname: vernemq{{.Task.Slot}}
     networks: *vernemq-networks
     volumes:
