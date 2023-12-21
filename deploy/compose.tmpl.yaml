@@ -1,5 +1,9 @@
 x-vernemq-base: &vernemq-base
   image: ${VERNEMQ_IMAGE_NAME:-vernemq/vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
+  networks:
+    vernemq-net:
+    metric-net:
+    traefik-net:
   healthcheck:
     test: wget -q -O - http://127.0.0.1:${HTTP_PORT}/health
     interval: ${HEALTHCHECK_INTERVAL:-30s}
@@ -17,14 +21,8 @@ x-vernemq-environment: &vernemq-environment
   DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__HOST:
   DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__PORT:
   DOCKER_VERNEMQ_DISTRIBUTED_COOKIE:
-  DOCKER_VERNEMQ_NODENAME: vernemq-{{.Task.Slot}}
   DOCKER_VERNEMQ_SWARM:
   DOCKER_VERNEMQ_ACCEPT_EULA:
-
-x-vernemq-networks: &vernemq-networks
-  vernemq-net:
-  metric-net:
-  traefik-net:
 
 x-vernemq-deploy: &vernemq-deploy
   mode: replicated
@@ -94,13 +92,8 @@ services:
     << : *vernemq-base
     environment:
       << : *vernemq-environment
-      DOCKER_VERNEMQ_LISTENER_VMQ_CLUSTERING: 'vernemq0:44053'
-    hostname: vernemq0
-    networks:
-      << : *vernemq-networks
-      vernemq-net:
-        aliases:
-          - ${DOCKER_VERNEMQ_DISCOVERY_NODE}
+      DOCKER_VERNEMQ_NODENAME: vernemq.0
+    hostname: vernemq.0
     volumes:
       - vernemq0-data-vol:/vernemq/data
       - vernemq0-conf-vol:/vernemq/etc
@@ -114,9 +107,8 @@ services:
     environment:
       << : *vernemq-environment
       DOCKER_VERNEMQ_DISCOVERY_NODE:
-      DOCKER_VERNEMQ_LISTENER_VMQ_CLUSTERING: 'vernemq{{.Task.Slot}}:44053'
-    hostname: vernemq{{.Task.Slot}}
-    networks: *vernemq-networks
+      DOCKER_VERNEMQ_NODENAME: vernemq.{{.Task.Slot}}
+    hostname: vernemq.{{.Task.Slot}}
     volumes:
       - vernemq-data-vol:/vernemq/data
       - vernemq-conf-vol:/vernemq/etc
