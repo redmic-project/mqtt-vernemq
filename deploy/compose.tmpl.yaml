@@ -44,6 +44,11 @@ x-vernemq-deploy: &vernemq-deploy
     traefik.http.middlewares.vernemq-root-redirect.redirectregex.permanent: 'true'
     traefik.http.routers.vernemq-dashboard.middlewares: vernemq-root-redirect
     traefik.http.services.vernemq-dashboard.loadbalancer.server.port: ${HTTP_PORT}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie: ${TRAEFIK_STICKY_COOKIE:-true}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie.name: ${TRAEFIK_STICKY_COOKIE_NAME:-traefik-vernemq-dashboard}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie.httponly: ${TRAEFIK_STICKY_COOKIE_HTTPONLY:-true}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie.secure: ${TRAEFIK_STICKY_COOKIE_SECURE:-true}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie.samesite: ${TRAEFIK_STICKY_COOKIE_SAMESITE:-lax}
     traefik.http.services.vernemq-dashboard.loadbalancer.healthcheck.path: ${TRAEFIK_HEALTHCHECK_PATH:-/health}
     traefik.http.services.vernemq-dashboard.loadbalancer.healthcheck.interval: ${TRAEFIK_HEALTHCHECK_INTERVAL:-1m}
     traefik.http.services.vernemq-dashboard.loadbalancer.healthcheck.timeout: ${TRAEFIK_HEALTHCHECK_TIMEOUT:-15s}
