@@ -93,7 +93,6 @@ services:
     environment:
       << : *vernemq-environment
       DOCKER_VERNEMQ_NODENAME: vernemq.0
-    hostname: vernemq.0
     volumes:
       - vernemq0-data-vol:/vernemq/data
       - vernemq0-conf-vol:/vernemq/etc
@@ -108,7 +107,7 @@ services:
       << : *vernemq-environment
       DOCKER_VERNEMQ_DISCOVERY_NODE:
       DOCKER_VERNEMQ_NODENAME: vernemq.{{.Task.Slot}}
-    hostname: vernemq.{{.Task.Slot}}
+    hostname: vernemq{{.Task.Slot}}
     volumes:
       - vernemq-data-vol:/vernemq/data
       - vernemq-conf-vol:/vernemq/etc
