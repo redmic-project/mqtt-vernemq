@@ -12,9 +12,9 @@ x-vernemq-base: &vernemq-base
     start_period: ${HEALTHCHECK_START_PERIOD:-1m}
 
 x-vernemq-environment: &vernemq-environment
+  DOCKER_NET_INTERFACE:
   DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL:
   DOCKER_VERNEMQ_ALLOW_ANONYMOUS:
-  DOCKER_IP_ADDRESS:
   DOCKER_VERNEMQ_PLUGINS__VMQ_PASSWD:
   DOCKER_VERNEMQ_PLUGINS__VMQ_ACL:
   DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY:
@@ -22,6 +22,9 @@ x-vernemq-environment: &vernemq-environment
   DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__HOST:
   DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__PORT:
   DOCKER_VERNEMQ_DISTRIBUTED_COOKIE:
+  DOCKER_VERNEMQ_LISTENER__HTTP__METRICS:
+  DOCKER_VERNEMQ_LISTENER__WS__DEFAULT:
+  DOCKER_VERNEMQ_LISTENER__TCP__DEFAULT:
   DOCKER_VERNEMQ_LISTENER__TCP__PROXY_PROTOCOL:
   DOCKER_VERNEMQ_ACCEPT_EULA:
 
@@ -113,8 +116,8 @@ services:
     environment:
       << : *vernemq-environment
       DOCKER_VERNEMQ_DISCOVERY_NODE:
-      DOCKER_VERNEMQ_NODENAME: vernemq{{.Task.Slot}}.local
-    hostname: vernemq{{.Task.Slot}}.local
+      DOCKER_VERNEMQ_NODENAME:
+    hostname: ${DOCKER_VERNEMQ_NODENAME}
     volumes:
       - vernemq-data-vol:/vernemq/data
       - vernemq-conf-vol:/vernemq/etc
