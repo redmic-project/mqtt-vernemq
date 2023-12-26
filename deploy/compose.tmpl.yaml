@@ -1,0 +1,150 @@
+x-vernemq-base: &vernemq-base
+  image: ${VERNEMQ_IMAGE_NAME:-vernemq/vernemq}:${VERNEMQ_IMAGE_TAG:-latest-alpine}
+  networks:
+    vernemq-net:
+    metric-net:
+    traefik-net:
+  healthcheck:
+    test: wget -q -O - http://127.0.0.1:${HTTP_PORT}/health
+    interval: ${HEALTHCHECK_INTERVAL:-30s}
+    timeout: ${HEALTHCHECK_TIMEOUT:-15s}
+    retries: ${HEALTHCHECK_RETRIES:-5}
+    start_period: ${HEALTHCHECK_START_PERIOD:-1m}
+
+x-vernemq-environment: &vernemq-environment
+  DOCKER_NET_INTERFACE:
+  DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL:
+  DOCKER_VERNEMQ_ALLOW_ANONYMOUS:
+  DOCKER_VERNEMQ_PLUGINS__VMQ_PASSWD:
+  DOCKER_VERNEMQ_PLUGINS__VMQ_ACL:
+  DOCKER_VERNEMQ_PLUGINS__VMQ_DIVERSITY:
+  DOCKER_VERNEMQ_VMQ_DIVERSITY__AUTH_REDIS__ENABLED:
+  DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__HOST:
+  DOCKER_VERNEMQ_VMQ_DIVERSITY__REDIS__PORT:
+  DOCKER_VERNEMQ_DISTRIBUTED_COOKIE:
+  DOCKER_VERNEMQ_LISTENER__HTTP__METRICS:
+  DOCKER_VERNEMQ_LISTENER__WS__DEFAULT:
+  DOCKER_VERNEMQ_LISTENER__TCP__DEFAULT:
+  DOCKER_VERNEMQ_LISTENER__TCP__PROXY_PROTOCOL:
+  DOCKER_VERNEMQ_ACCEPT_EULA:
+
+x-vernemq-deploy: &vernemq-deploy
+  mode: replicated
+  placement:
+    max_replicas_per_node: 1
+  restart_policy:
+    delay: ${VERNEMQ_RESTART_DELAY:-10s}
+  update_config:
+    delay: ${VERNEMQ_UPDATE_DELAY:-5m}
+  labels:
+    traefik.enable: ${TRAEFIK_ENABLE:-true}
+
+    traefik.http.routers.vernemq-dashboard.entrypoints: ${TRAEFIK_HTTP_ENTRYPOINT}
+    traefik.http.routers.vernemq-dashboard.rule: Host(`${TRAEFIK_HTTP_SUBDOMAIN}.${PUBLIC_HOSTNAME}`)
+    traefik.http.middlewares.vernemq-root-redirect.redirectregex.regex: ^(.*://${TRAEFIK_HTTP_SUBDOMAIN}.${PUBLIC_HOSTNAME})/$$
+    traefik.http.middlewares.vernemq-root-redirect.redirectregex.replacement: $$1/status
+    traefik.http.middlewares.vernemq-root-redirect.redirectregex.permanent: 'true'
+    traefik.http.routers.vernemq-dashboard.middlewares: vernemq-root-redirect
+    traefik.http.services.vernemq-dashboard.loadbalancer.server.port: ${HTTP_PORT}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie: ${TRAEFIK_STICKY_COOKIE:-true}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie.name: ${TRAEFIK_STICKY_COOKIE_NAME:-traefik-vernemq-dashboard}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie.httponly: ${TRAEFIK_STICKY_COOKIE_HTTPONLY:-true}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie.secure: ${TRAEFIK_STICKY_COOKIE_SECURE:-true}
+    traefik.http.services.vernemq-dashboard.loadbalancer.sticky.cookie.samesite: ${TRAEFIK_STICKY_COOKIE_SAMESITE:-lax}
+    traefik.http.services.vernemq-dashboard.loadbalancer.healthcheck.path: ${TRAEFIK_HEALTHCHECK_PATH:-/health}
+    traefik.http.services.vernemq-dashboard.loadbalancer.healthcheck.interval: ${TRAEFIK_HEALTHCHECK_INTERVAL:-1m}
+    traefik.http.services.vernemq-dashboard.loadbalancer.healthcheck.timeout: ${TRAEFIK_HEALTHCHECK_TIMEOUT:-15s}
+    traefik.http.routers.vernemq-dashboard.service: vernemq-dashboard
+
+    traefik.tcp.routers.vernemq-mqtt.entrypoints: ${TRAEFIK_MQTT_ENTRYPOINT}
+    traefik.tcp.routers.vernemq-mqtt.rule: HostSNI(`*`)
+    traefik.tcp.services.vernemq-mqtt.loadbalancer.server.port: ${MQTT_PORT}
+    traefik.tcp.services.vernemq-mqtt.loadbalancer.proxyprotocol: 'true'
+    traefik.tcp.routers.vernemq-mqtt.service: vernemq-mqtt
+
+    traefik.http.routers.vernemq-mqttws.entrypoints: ${TRAEFIK_HTTP_ENTRYPOINT}
+    traefik.http.routers.vernemq-mqttws.rule: Host(`${TRAEFIK_MQTT_SUBDOMAIN}.${PUBLIC_HOSTNAME}`)
+    traefik.http.services.vernemq-mqttws.loadbalancer.server.port: ${MQTTWS_PORT}
+    traefik.http.routers.vernemq-mqttws.service: vernemq-mqttws
+  resources:
+    limits:
+      cpus: '${VERNEMQ_RESOURCES_LIMITS_CPUS:-1}'
+      memory: ${VERNEMQ_RESOURCES_LIMITS_MEMORY:-256M}
+    reservations:
+      cpus: '${VERNEMQ_RESOURCES_RESERVATIONS_CPUS:-0.1}'
+      memory: ${VERNEMQ_RESOURCES_RESERVATIONS_MEMORY:-128M}
+
+services:
+  vmq-redis:
+    image: ${REDIS_IMAGE_NAME:-redis}:${REDIS_IMAGE_TAG:-alpine}
+    command: redis-server --appendonly yes
+    networks:
+      vernemq-net:
+    volumes:
+      - redis-data-vol:/data
+    deploy:
+      mode: replicated
+      replicas: ${REDIS_REPLICAS:-1}
+      restart_policy:
+        delay: ${REDIS_RESTART_DELAY:-5s}
+      update_config:
+        delay: ${REDIS_UPDATE_DELAY:-1m}
+      resources:
+        limits:
+          cpus: '${REDIS_RESOURCES_LIMITS_CPUS:-0.1}'
+          memory: ${REDIS_RESOURCES_LIMITS_MEMORY:-32M}
+        reservations:
+          cpus: '${REDIS_RESOURCES_RESERVATIONS_CPUS:-0.001}'
+          memory: ${REDIS_RESOURCES_RESERVATIONS_MEMORY:-8M}
+
+  vernemq0:
+    << : *vernemq-base
+    environment:
+      << : *vernemq-environment
+      DOCKER_VERNEMQ_NODENAME: ${DOCKER_VERNEMQ_DISCOVERY_NODE}
+    hostname: ${DOCKER_VERNEMQ_DISCOVERY_NODE}
+    volumes:
+      - vernemq0-data-vol:/vernemq/data
+      - vernemq0-conf-vol:/vernemq/etc
+      - vernemq0-log-vol:/vernemq/log
+    deploy:
+      << : *vernemq-deploy
+      replicas: 1
+
+  vernemq:
+    << : *vernemq-base
+    environment:
+      << : *vernemq-environment
+      DOCKER_VERNEMQ_DISCOVERY_NODE:
+      DOCKER_VERNEMQ_NODENAME:
+    hostname: ${DOCKER_VERNEMQ_NODENAME}
+    volumes:
+      - vernemq-data-vol:/vernemq/data
+      - vernemq-conf-vol:/vernemq/etc
+      - vernemq-log-vol:/vernemq/log
+    deploy:
+      << : *vernemq-deploy
+      replicas: ${VERNEMQ_REPLICAS:-1}
+
+networks:
+  vernemq-net:
+    name: ${VERNEMQ_NET_NAME:-vernemq-net}
+    driver: ${VERNEMQ_NET_DRIVER:-overlay}
+    attachable: ${VERNEMQ_NET_ATTACHABLE:-false}
+
+  metric-net:
+    name: ${METRIC_NET_NAME:-metric-net}
+    driver: ${METRIC_NET_DRIVER:-overlay}
+    external: true
+
+  traefik-net:
+    name: ${TRAEFIK_NET_NAME:-traefik-net}
+    driver: ${TRAEFIK_NET_DRIVER:-overlay}
+    external: true
+
+volumes:
+  vernemq0-log-vol:
+    name: ${VERNEMQ_LOG_VOL_NAME}-0
+
+  vernemq-log-vol:
+    name: ${VERNEMQ_LOG_VOL_NAME}-{{.Task.Slot}}
